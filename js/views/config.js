@@ -29,7 +29,7 @@
       <section class="card">
         <h2>Lista de pagamentos do To Do</h2>
         <p>${settings.todoListName ? html`Lista usada: <strong>${settings.todoListName}</strong>` : 'Nenhuma lista escolhida.'}</p>
-        <p class="hint" style="margin-top:6px">Coloque o valor no título, como <span class="code">Pagar gráfica - R$ 150,00</span>. Ao concluir a tarefa, o saldo é descontado. O app só lê o To Do e nunca altera as tarefas.</p>
+        <p class="hint" style="margin-top:6px">Uma tarefa por dia (título <span class="code">09/11</span>) e cada pagamento como etapa, com o valor: <span class="code">150,00 - Gráfica</span>. Ao marcar a etapa, o saldo é descontado na data do título. Tarefas sem etapas também valem, com o valor no título. O app só lê o To Do e nunca altera as tarefas.</p>
         ${SAM.ms.connected() ? html`<div class="btn-row" style="margin-top:10px"><button type="button" class="btn" data-act="pick-list">${settings.todoListId ? 'Trocar lista' : 'Escolher lista'}</button></div>` : ''}
       </section>
       <section class="card">

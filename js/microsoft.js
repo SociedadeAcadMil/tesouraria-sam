@@ -120,24 +120,69 @@
     lists() { return this.allPages('/me/todo/lists'); },
 
     async tasks(listId) {
-      const raw = await this.allPages(`/me/todo/lists/${encodeURIComponent(listId)}/tasks?$top=100`);
-      return raw.map(ms.toTask);
+      const raw = await this.allPages(`/me/todo/lists/${encodeURIComponent(listId)}/tasks?$top=100&$expand=checklistItems`);
+      return raw.flatMap(ms.toPayments);
     },
 
-    // Formato interno de uma tarefa. A data de conclusão usa o dia informado
-    // pelo To Do, sem conversão de fuso, para não deslocar o pagamento de dia.
-    toTask(t) {
-      const done = t.status === 'completed';
-      const completed = t.completedDateTime && t.completedDateTime.dateTime;
-      const fallback = t.lastModifiedDateTime || t.createdDateTime || '';
-      return {
-        id: t.id,
-        title: t.title || '(sem título)',
-        done,
-        completedAt: done ? String(completed || fallback).slice(0, 10) : null,
-        dueAt: t.dueDateTime && t.dueDateTime.dateTime ? t.dueDateTime.dateTime.slice(0, 10) : null,
-        cents: SAM.parseTitleValue(t.title),
-      };
+    // Data no título da tarefa ("08/11", "DIA 24/06", "29/06 (STONE)", "08/11/2026").
+    // Sem ano, usa o ano em que a tarefa foi criada, corrigindo a virada de ano
+    // (tarefa "28/12" criada em janeiro).
+    titleDate(title, createdIso) {
+      const m = String(title || '').match(/(?:^|\D)(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?(?!\d)/);
+      if (!m) return null;
+      const day = Number(m[1]);
+      const month = Number(m[2]);
+      if (day < 1 || day > 31 || month < 1 || month > 12) return null;
+      let year;
+      if (m[3]) {
+        year = Number(m[3].length === 2 ? `20${m[3]}` : m[3]);
+      } else {
+        const created = createdIso ? new Date(createdIso) : new Date();
+        year = created.getFullYear();
+        const monthsAhead = (month - 1) - created.getMonth();
+        if (monthsAhead > 6) year -= 1;
+        if (monthsAhead < -6) year += 1;
+      }
+      const pad = (n) => String(n).padStart(2, '0');
+      return `${year}-${pad(month)}-${pad(day)}`;
+    },
+
+    // Cada etapa de uma tarefa é um pagamento ("2.333,23 - Salário Ruth"), pago
+    // quando a etapa é marcada ou a tarefa inteira é concluída. A data do pagamento
+    // é a do título da tarefa; sem data no título, a da marcação no To Do.
+    // Tarefa sem etapas vale como um pagamento só, com o valor no título.
+    toPayments(t) {
+      const taskDone = t.status === 'completed';
+      const day = (v) => (v ? String(v).slice(0, 10) : null);
+      const taskCompleted = day(t.completedDateTime && t.completedDateTime.dateTime)
+        || day(t.lastModifiedDateTime);
+      const fromTitle = ms.titleDate(t.title, t.createdDateTime);
+      const dueAt = day(t.dueDateTime && t.dueDateTime.dateTime) || fromTitle;
+      const items = t.checklistItems || [];
+
+      if (!items.length) {
+        return [{
+          id: t.id,
+          title: t.title || '(sem título)',
+          group: null,
+          done: taskDone,
+          completedAt: taskDone ? (fromTitle || taskCompleted) : null,
+          dueAt,
+          cents: SAM.parseTitleValue(t.title),
+        }];
+      }
+      return items.map((c) => {
+        const done = Boolean(c.isChecked) || taskDone;
+        return {
+          id: `${t.id}:${c.id}`,
+          title: c.displayName || '(sem descrição)',
+          group: t.title || null,
+          done,
+          completedAt: done ? (fromTitle || day(c.checkedDateTime) || taskCompleted) : null,
+          dueAt,
+          cents: SAM.parseTitleValue(c.displayName),
+        };
+      });
     },
   };
 

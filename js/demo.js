@@ -33,7 +33,7 @@
   ms.signIn = async () => SAM.ui.toast('Na demonstração não há login.');
   ms.signOut = async () => SAM.ui.toast('Na demonstração não há login.');
   ms.lists = async () => [{ id: 'demo', displayName: 'Pagamentos SAM' }, { id: 'outra', displayName: 'Tarefas' }];
-  ms.tasks = async () => rawTasks.map(ms.toTask);
+  ms.tasks = async () => rawTasks.flatMap(ms.toPayments);
 
   const now = Date.now();
   const rec = (fields) => ({ id: SAM.uid(), updatedAt: now, ...fields });
@@ -74,5 +74,5 @@
     ignoredTasks: {},
     deleted: {},
   };
-  store.setTodo(rawTasks.map(ms.toTask));
+  store.setTodo(rawTasks.flatMap(ms.toPayments));
 })(window.SAM);

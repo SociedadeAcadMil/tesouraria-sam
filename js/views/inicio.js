@@ -3,17 +3,26 @@
   const { html, brl, store, ui } = SAM;
   const CATEGORIES = ['Mensalidade', 'Recolhimento de projeto', 'Evento', 'Doação', 'Outros'];
   let showAll = false;
+  let showAllUnreadable = false;
 
   function alerts() {
     const list = [];
     const today = SAM.today();
     const month = SAM.monthOf(today);
 
-    store.unreadableTasks().forEach((t) => list.push({
+    const unreadable = store.unreadableTasks();
+    (showAllUnreadable ? unreadable : unreadable.slice(0, 5)).forEach((t) => list.push({
       tone: 'bad',
-      text: `Sem valor no título, fora do saldo: "${t.title}". Corrija no To Do, por exemplo "… - R$ 150,00".`,
+      text: `Sem valor, fora do saldo: "${t.title}"${t.group ? ` (${t.group})` : ''}. Corrija no To Do, por exemplo "150,00 - Gráfica".`,
       action: html`<button type="button" class="btn btn-small" data-act="ignore-task" data-id="${t.id}">Não é pagamento</button>`,
     }));
+    if (unreadable.length > 5) {
+      list.push({
+        tone: 'bad',
+        text: showAllUnreadable ? 'Mostrando todos os itens sem valor.' : `Mais ${unreadable.length - 5} itens do To Do sem valor.`,
+        action: html`<button type="button" class="btn btn-small" data-act="toggle-unreadable">${showAllUnreadable ? 'Mostrar menos' : 'Ver todos'}</button>`,
+      });
+    }
 
     store.state.fixed.filter((f) => f.startMonth <= month && !(f.checks || {})[month]).forEach((f) => {
       const due = SAM.dueDate(month, f.dueDay);
@@ -77,7 +86,7 @@
     const projectName = (id) => { const p = store.find('projects', id); return p ? p.name : null; };
     const rows = [
       ...store.activeEntries().map((e) => ({ kind: 'in', date: e.date, title: e.desc, sub: e.category, cents: e.cents, entry: e, project: projectName(e.projectId) })),
-      ...store.paidTasks().map((t) => ({ kind: 'out', date: t.completedAt, title: t.title, sub: 'Pago pelo To Do', cents: t.cents })),
+      ...store.paidTasks().map((t) => ({ kind: 'out', date: t.completedAt, title: t.title, sub: t.group ? `To Do · ${t.group}` : 'Pago pelo To Do', cents: t.cents })),
     ].sort((a, b) => String(b.date).localeCompare(String(a.date)));
     const visible = showAll ? rows : rows.slice(0, 10);
 
@@ -138,7 +147,7 @@
       </section>` : ''}
 
       ${open.length ? html`<section class="card">
-        <h2>A pagar (tarefas abertas no To Do)</h2>
+        <h2>A pagar (etapas não marcadas no To Do)</h2>
         <ul class="rows">
           ${open.map((t) => html`<li>
             <div class="row-main">
@@ -184,6 +193,7 @@
   SAM.actions['new-entry'] = () => entryForm(null);
   SAM.actions['edit-entry'] = (d) => entryForm(store.find('entries', d.id));
   SAM.actions['toggle-all'] = () => { showAll = !showAll; ui.render(); };
+  SAM.actions['toggle-unreadable'] = () => { showAllUnreadable = !showAllUnreadable; ui.render(); };
   SAM.actions['ignore-task'] = (d) => {
     store.state.ignoredTasks[d.id] = Date.now();
     store.commit();

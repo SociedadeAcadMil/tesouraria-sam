@@ -62,6 +62,13 @@ window.SAM = window.SAM || {};
     if (withSymbol.length === 1) return withSymbol[0];
     if (withSymbol.length > 1) return null;
 
+    // Formato da lista da SAM: "VALOR - descrição" ou "descrição - VALOR".
+    // Aqui o traço indica que o número é o valor, mesmo sem centavos ("810 - Palha").
+    const leading = text.match(/^\s*(\d[\d.,]*)\s*-\s*\S/);
+    if (leading) return numberToCents(leading[1]);
+    const trailing = text.match(/(?:^|[^\d\s])\s*-\s*(\d[\d.,]*)\s*$/);
+    if (trailing) return numberToCents(trailing[1]);
+
     const withCents = unique(
       [...text.matchAll(/(?<![\d.,])(\d{1,3}(?:\.\d{3})+,\d{2}|\d+,\d{2})(?![\d])/g)]
         .map((m) => numberToCents(m[1]))

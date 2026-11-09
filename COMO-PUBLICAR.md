@@ -44,10 +44,12 @@ Salve com **Commit changes**. O ID não é uma senha, e pode ficar visível.
 
 ## Regras do saldo
 
-**Saldo = saldo inicial + entradas − tarefas concluídas no To Do depois da data do saldo inicial.**
+**Saldo = saldo inicial + entradas − pagamentos marcados no To Do depois da data do saldo inicial.**
 
-- **O título precisa ter o valor**, como `Pagar gráfica - R$ 150,00`. Sem isso, a tarefa aparece em **Precisa de atenção** e fica fora do saldo, até ser corrigida no To Do.
-- **Uma lista só para pagamentos** evita alertas por tarefas que não são pagamentos. Se houver alguma, use **Não é pagamento**.
+- **Formato da lista:** uma tarefa por dia, com a data no título (`09/11`, `DIA 24/06` ou `29/06 (STONE)`), e cada pagamento como uma etapa, com o valor no começo ou no fim: `2.333,23 - Salário Ruth` ou `padasam - 1078,60`.
+- **Quando desconta:** a etapa marcada, ou a tarefa inteira concluída, desconta do saldo na data do título. Etapas não marcadas aparecem em **A pagar**.
+- **Tarefa sem etapas** vale como um pagamento só, com o valor no título, como `Pagar gráfica - R$ 150,00`.
+- **Sem valor claro**, como `cookie (312) 28/10 + (540) 29/10` ou `7,362,70 - Impressões`, o item fica fora do saldo e aparece em **Precisa de atenção**, até ser corrigido no To Do. Se não for pagamento, use **Não é pagamento**.
 - **Checklist de gastos fixos, pagamentos de projeto e orçamento não alteram o saldo.** Assim, um pagamento nunca é descontado duas vezes.
 - **Reservado a projetos** é o que foi recolhido e ainda não foi pago ao fornecedor. **Livre para uso** é o saldo sem essa reserva.
 
