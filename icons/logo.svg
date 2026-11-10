@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="46 12 180 148" role="img" aria-label="SAM">
+  <rect x="58.14" y="40.61" width="153.93" height="90.94" rx="15.68" fill="#02903E"/>
+  <circle cx="136.12" cy="86.64" r="28.2" fill="#27136C"/>
+  <path d="M220.73 99.66 L136.88 18.17 L71.92 81.95 C124.36 37.49 172.86 63.03 220.73 99.66 Z" fill="#F6C004" stroke="#fff" stroke-width="2" stroke-linejoin="miter"/>
+  <path d="M51.84 73.68 L135.70 154.38 L199.08 91.79 C159.96 129.03 109.94 118.92 51.84 73.68 Z" fill="#F6C004" stroke="#fff" stroke-width="2" stroke-linejoin="miter"/>
+</svg>
