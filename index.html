@@ -3,24 +3,27 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' file: https://cdn.jsdelivr.net; style-src 'self' file: 'unsafe-inline'; img-src 'self' file: data:; connect-src 'self' https:; frame-src 'self' https://login.microsoftonline.com; manifest-src 'self'; object-src 'none'; base-uri 'none'">
-  <meta name="theme-color" content="#16324f">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' file: https://cdn.jsdelivr.net; style-src 'self' file: 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' file: data:; connect-src 'self' https:; frame-src 'self' https://login.microsoftonline.com; manifest-src 'self'; object-src 'none'; base-uri 'none'">
+  <meta name="theme-color" content="#27136c">
   <meta name="description" content="Controle financeiro da tesouraria da Sociedade Acadêmica Militar">
   <title>Tesouraria SAM</title>
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <link rel="icon" type="image/svg+xml" href="icons/logo.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
   <div id="demo-banner" class="demo-banner" hidden>
-    Modo demonstração: dados fictícios, nada é salvo na conta Microsoft.
+    Demonstração com dados fictícios.
     <a href="./">Sair</a>
   </div>
 
   <header class="topbar">
     <div class="brand">
-      <img src="icons/icon-192.png" alt="" width="32" height="32">
+      <span class="brand-mark"><img src="icons/logo.svg" alt="" width="28" height="23"></span>
       <div>
         <strong>Tesouraria SAM</strong>
         <span id="status-line" class="status-line" role="status"></span>
