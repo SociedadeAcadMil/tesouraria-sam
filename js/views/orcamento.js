@@ -50,8 +50,7 @@
     const tasks = store.paidTasks().filter((t) => SAM.monthOf(t.completedAt || '') === ui.month && !used.has(t.id));
     if (!tasks.length || !budget.sectors.length) return '';
     return html`<section class="card">
-      <h2>Pagamentos do To Do sem setor</h2>
-      <p class="hint">Escolha o setor para lançar o gasto sem precisar digitar de novo.</p>
+      <h2>Pagamentos sem setor</h2>
       <ul class="rows">
         ${tasks.map((t) => html`<li style="flex-wrap:wrap">
           <div class="row-main" style="min-width:180px"><div>${t.title}</div><div class="row-sub">${SAM.fmtDate(t.completedAt)} · ${brl(t.cents)}</div></div>
@@ -74,20 +73,17 @@
     const { month } = ui;
     const budget = store.budgetFor(month);
     const head = html`<div class="page-head">
-      <div>
-        <h1>Orçamento mensal</h1>
-        <p class="page-sub">Divida o previsto por setor e lance os gastos do mês.</p>
-      </div>
-      ${budget ? html`<button type="button" class="btn btn-primary" data-act="new-sector">+ Novo setor</button>` : ''}
+      <h1>Orçamento</h1>
+      ${budget ? html`<button type="button" class="btn btn-primary" data-act="new-sector">+ Setor</button>` : ''}
     </div>${ui.monthNav()}`;
 
     if (!budget) {
       const earlier = latestBefore(month);
       return html`${head}<section class="card empty-card">
-        <p class="empty">Ainda não há orçamento para ${SAM.monthLabel(month)}.</p>
+        <p class="empty">Sem orçamento neste mês.</p>
         <div class="btn-row" style="justify-content:center">
-          <button type="button" class="btn btn-primary" data-act="new-budget">Criar orçamento</button>
-          ${earlier ? html`<button type="button" class="btn" data-act="copy-budget" data-from="${earlier.month}">Copiar setores de ${SAM.monthLabel(earlier.month)}</button>` : ''}
+          <button type="button" class="btn btn-primary" data-act="new-budget">Criar</button>
+          ${earlier ? html`<button type="button" class="btn" data-act="copy-budget" data-from="${earlier.month}">Copiar de ${SAM.monthLabel(earlier.month)}</button>` : ''}
         </div>
       </section>`;
     }
@@ -103,20 +99,20 @@
     return html`${head}
       <section class="card">
         <div class="card-head">
-          <h2>Visão do mês</h2>
-          <button type="button" class="btn btn-small" data-act="edit-budget">Editar total</button>
+          <h2>Resumo</h2>
+          <button type="button" class="btn btn-small" data-act="edit-budget">Editar</button>
         </div>
         <div class="stats" style="margin:10px 0">
-          <div><div class="stat-label">Orçamento do mês</div><div class="stat-value">${brl(budget.totalCents)}</div></div>
+          <div><div class="stat-label">Orçamento</div><div class="stat-value">${brl(budget.totalCents)}</div></div>
           <div><div class="stat-label">Gasto</div><div class="stat-value">${brl(spent)}</div></div>
           <div><div class="stat-label">${left < 0 ? 'Acima do orçamento' : 'Restante'}</div><div class="stat-value ${left < 0 ? 'bad' : 'good'}">${brl(Math.abs(left))}</div></div>
         </div>
         ${ui.bar(SAM.pct(spent, budget.totalCents), tone)}
         <p class="hint" style="margin-top:8px">
-          ${free >= 0 ? `Falta distribuir entre os setores: ${brl(free)}` : `Os setores somam ${brl(-free)} a mais que o orçamento do mês.`}
+          ${free >= 0 ? `Não distribuído: ${brl(free)}` : `Setores excedem o total em ${brl(-free)}`}
         </p>
       </section>
-      ${budget.sectors.length === 0 ? html`<section class="card empty-card"><p class="empty">Crie os setores para dividir o orçamento, como Eventos, Comunicação e Administrativo.</p></section>` : budget.sectors.map(sectorCard)}
+      ${budget.sectors.length === 0 ? html`<section class="card empty-card"><p class="empty">Nenhum setor criado.</p></section>` : budget.sectors.map(sectorCard)}
       ${unallocated(budget)}
     `;
   };
@@ -154,7 +150,7 @@
     const defaultDate = SAM.monthOf(SAM.today()) === ui.month ? SAM.today() : `${ui.month}-01`;
     const v = await ui.form({
       title: expense ? 'Editar gasto' : `Lançar gasto: ${sector.name}`,
-      intro: expense ? '' : 'Isto atualiza o orçamento do setor. O saldo é descontado pela tarefa concluída no To Do.',
+      intro: expense ? '' : 'Não altera o saldo.',
       fields: [
         { name: 'desc', label: 'Descrição', required: true, value: expense && expense.desc },
         { name: 'cents', label: 'Valor (R$)', type: 'money', required: true, positive: true, value: expense ? expense.cents : null },

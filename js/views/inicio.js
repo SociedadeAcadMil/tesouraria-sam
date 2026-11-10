@@ -22,19 +22,19 @@
       if (items.length < 3) { unreadable.push(...items); return; }
       list.push({
         tone: 'bad',
-        text: `${items.length} itens sem valor na tarefa "${items[0].group}", fora do saldo. Se ela só guarda lembretes, ignore a tarefa inteira.`,
+        text: `${items.length} itens sem valor em "${items[0].group}"`,
         action: html`<button type="button" class="btn btn-small" data-act="ignore-whole-task" data-id="${taskId}" data-name="${items[0].group}">Não são pagamentos</button>`,
       });
     });
     (showAllUnreadable ? unreadable : unreadable.slice(0, 5)).forEach((t) => list.push({
       tone: 'bad',
-      text: `Sem valor, fora do saldo: "${t.title}"${t.group ? ` (${t.group})` : ''}. Corrija no To Do, por exemplo "150,00 - Gráfica".`,
+      text: `Sem valor: "${t.title}"${t.group ? ` (${t.group})` : ''}`,
       action: html`<button type="button" class="btn btn-small" data-act="ignore-task" data-id="${t.id}">Não é pagamento</button>`,
     }));
     if (unreadable.length > 5) {
       list.push({
         tone: 'bad',
-        text: showAllUnreadable ? 'Mostrando todos os itens sem valor.' : `Mais ${unreadable.length - 5} itens do To Do sem valor.`,
+        text: showAllUnreadable ? 'Todos os itens sem valor' : `+${unreadable.length - 5} itens sem valor`,
         action: html`<button type="button" class="btn btn-small" data-act="toggle-unreadable">${showAllUnreadable ? 'Mostrar menos' : 'Ver todos'}</button>`,
       });
     }
@@ -42,23 +42,23 @@
     store.state.fixed.filter((f) => f.startMonth <= month && !(f.checks || {})[month]).forEach((f) => {
       const due = SAM.dueDate(month, f.dueDay);
       const days = SAM.daysBetween(today, due);
-      if (days < 0) list.push({ tone: 'bad', text: `Gasto fixo atrasado: ${f.name} venceu em ${SAM.fmtDay(due)}.`, tab: 'fixos' });
-      else if (days <= 3) list.push({ tone: 'warn', text: `Gasto fixo próximo: ${f.name} vence ${days === 0 ? 'hoje' : `em ${SAM.fmtDay(due)}`}.`, tab: 'fixos' });
+      if (days < 0) list.push({ tone: 'bad', text: `${f.name}: venceu ${SAM.fmtDay(due)}`, tab: 'fixos' });
+      else if (days <= 3) list.push({ tone: 'warn', text: `${f.name}: vence ${days === 0 ? 'hoje' : SAM.fmtDay(due)}`, tab: 'fixos' });
     });
 
     store.state.projects.filter((p) => !p.archived && p.deadline).forEach((p) => {
       const { paid } = store.projectTotals(p);
       if (p.costCents && paid >= p.costCents) return;
       const days = SAM.daysBetween(today, p.deadline);
-      if (days < 0) list.push({ tone: 'bad', text: `Projeto com prazo vencido: ${p.name} (${SAM.fmtDay(p.deadline)}).`, tab: 'projetos' });
-      else if (days <= 14) list.push({ tone: 'warn', text: `Prazo próximo: ${p.name} vence em ${SAM.fmtDay(p.deadline)}.`, tab: 'projetos' });
+      if (days < 0) list.push({ tone: 'bad', text: `${p.name}: prazo vencido ${SAM.fmtDay(p.deadline)}`, tab: 'projetos' });
+      else if (days <= 14) list.push({ tone: 'warn', text: `${p.name}: prazo ${SAM.fmtDay(p.deadline)}`, tab: 'projetos' });
     });
 
     const budget = store.budgetFor(month);
     if (budget) {
       (budget.sectors || []).forEach((s) => {
         const over = store.sectorSpent(s) - s.plannedCents;
-        if (over > 0) list.push({ tone: 'bad', text: `Setor ${s.name} passou ${brl(over)} do orçamento do mês.`, tab: 'orcamento' });
+        if (over > 0) list.push({ tone: 'bad', text: `${s.name}: ${brl(over)} acima do orçamento`, tab: 'orcamento' });
       });
     }
     return list;
@@ -69,17 +69,17 @@
     const steps = [
       {
         done: Boolean(settings.initialDate),
-        text: 'Informar o saldo atual da conta da SAM',
+        text: 'Saldo inicial',
         action: html`<button type="button" class="btn btn-small" data-act="edit-initial">Informar</button>`,
       },
       {
         done: SAM.ms.connected(),
-        text: 'Conectar a conta Microsoft',
+        text: 'Conta Microsoft',
         action: html`<button type="button" class="btn btn-small" data-act="go" data-tab="config">Conectar</button>`,
       },
       {
         done: Boolean(settings.todoListId),
-        text: 'Escolher a lista de pagamentos do To Do',
+        text: 'Lista do To Do',
         action: SAM.ms.connected() ? html`<button type="button" class="btn btn-small" data-act="pick-list">Escolher</button>` : '',
       },
     ];
@@ -93,7 +93,7 @@
           ${s.done ? '' : s.action}
         </li>`)}
       </ol>
-      ${SAM.ms.configured() ? '' : html`<p class="hint" style="margin-top:12px">Quer ver o app preenchido antes? <a href="?demo=1">Abrir a demonstração</a>.</p>`}
+      ${SAM.ms.configured() ? '' : html`<p class="hint" style="margin-top:12px"><a href="?demo=1">Ver demonstração</a></p>`}
     </section>`;
   }
 
@@ -125,33 +125,28 @@
 
   SAM.views.inicio = () => {
     const s = store.summary();
-    const { settings } = store.state;
     const open = store.openTasks();
     const items = alerts();
 
     return html`
       <section class="hero" aria-label="Saldo">
-        <div class="hero-label">Saldo atual da SAM</div>
+        <div class="hero-label">Saldo</div>
         <div class="hero-value ${s.balance < 0 ? 'is-negative' : ''}">${brl(s.balance)}</div>
-        <div class="hero-note">
-          ${settings.initialDate ? `Partiu de ${brl(settings.initialCents)} em ${SAM.fmtDate(settings.initialDate)}` : 'Saldo inicial ainda não informado'}
-          ${store.todo.fetchedAt ? ` · To Do lido em ${SAM.fmtStamp(store.todo.fetchedAt)}` : ''}
-        </div>
         <dl class="hero-metrics">
-          <div><dt>Livre para uso</dt><dd>${brl(s.free)}</dd></div>
-          <div><dt>Reservado a projetos</dt><dd>${brl(s.reserved)}</dd></div>
-          <div><dt>A pagar no To Do</dt><dd>${brl(s.pending)}</dd></div>
-          <div><dt>Após pagar tudo</dt><dd>${brl(s.afterPending)}</dd></div>
+          <div><dt>Livre</dt><dd>${brl(s.free)}</dd></div>
+          <div><dt>Projetos</dt><dd>${brl(s.reserved)}</dd></div>
+          <div><dt>A pagar</dt><dd>${brl(s.pending)}</dd></div>
+          <div><dt>Após pagar</dt><dd>${brl(s.afterPending)}</dd></div>
         </dl>
         <div class="hero-actions">
-          <button type="button" class="btn btn-primary" data-act="new-entry">+ Registrar entrada</button>
+          <button type="button" class="btn btn-primary" data-act="new-entry">+ Entrada</button>
         </div>
       </section>
 
       ${setupCard()}
 
       ${items.length ? html`<section class="card">
-        <h2>Precisa de atenção</h2>
+        <h2>Atenção</h2>
         <ul class="alerts">
           ${items.map((a) => html`<li class="alert ${a.tone}">
             <span>${a.text}</span>
@@ -162,7 +157,7 @@
       </section>` : ''}
 
       ${open.length ? html`<section class="card">
-        <h2>A pagar (etapas não marcadas no To Do)</h2>
+        <h2>A pagar</h2>
         <ul class="rows">
           ${open.map((t) => html`<li>
             <div class="row-main">

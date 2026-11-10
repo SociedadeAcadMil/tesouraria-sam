@@ -61,36 +61,30 @@
     </li>`;
 
     return html`
-      <div class="page-head">
-        <div>
-          <h1>Balancete</h1>
-          <p class="page-sub">Entradas e saídas do mês, separadas por categoria.</p>
-        </div>
-      </div>
+      <div class="page-head"><h1>Balancete</h1></div>
       ${ui.monthNav()}
 
       <section class="card">
         <div class="stats">
           <div><div class="stat-label">Entradas</div><div class="stat-value good">${brl(inTotal)}</div></div>
           <div><div class="stat-label">Saídas</div><div class="stat-value bad">${brl(outTotal)}</div></div>
-          <div><div class="stat-label">Resultado do mês</div><div class="stat-value ${result < 0 ? 'bad' : 'good'}">${result < 0 ? '−' : ''} ${brl(Math.abs(result))}</div></div>
+          <div><div class="stat-label">Resultado</div><div class="stat-value ${result < 0 ? 'bad' : 'good'}">${result < 0 ? '−' : ''} ${brl(Math.abs(result))}</div></div>
         </div>
         ${store.state.settings.initialDate && SAM.monthOf(store.state.settings.initialDate) === month
-          ? html`<p class="hint" style="margin-top:8px">Considera só o que aconteceu a partir de ${SAM.fmtDate(store.state.settings.initialDate)}, data do saldo inicial.</p>` : ''}
+          ? html`<p class="hint" style="margin-top:8px">Desde ${SAM.fmtDate(store.state.settings.initialDate)}</p>` : ''}
       </section>
 
       ${uncategorized.length ? html`<section class="card">
         <div class="card-head">
-          <h2>Pagamentos sem categoria (${uncategorized.length})</h2>
-          ${suggestable.length ? html`<button type="button" class="btn btn-small btn-primary" data-act="apply-suggestions">Usar categorias anteriores (${suggestable.length})</button>` : ''}
+          <h2>A classificar (${uncategorized.length})</h2>
+          ${suggestable.length ? html`<button type="button" class="btn btn-small btn-primary" data-act="apply-suggestions">Repetir categorias (${suggestable.length})</button>` : ''}
         </div>
-        ${suggestable.length ? html`<p class="hint" style="margin-top:6px">${suggestable.length} itens já foram classificados antes com a mesma descrição, como "${suggestable[0].title}".</p>` : ''}
         <ul class="rows" style="margin-top:6px">${uncategorized.map(row)}</ul>
       </section>` : ''}
 
       <section class="card">
-        <h2>Saídas por categoria</h2>
-        ${paid.length === 0 ? html`<p class="empty">Nenhum pagamento do To Do neste mês.</p>` : html`
+        <h2>Saídas</h2>
+        ${paid.length === 0 ? html`<p class="empty">Nenhum pagamento neste mês.</p>` : html`
           ${SAM.EXPENSE_CATS.map((c) => group(`bal-${c.id}`, c.label, c.tone, paid.filter((t) => store.categoryOf(t.id) === c.id), outTotal, row, (t) => t.cents))}
           ${uncategorized.length ? (() => {
             const value = SAM.sum(uncategorized, (t) => t.cents);
@@ -107,10 +101,10 @@
 
       <section class="card">
         <div class="card-head">
-          <h2>Entradas por tipo</h2>
-          <button type="button" class="btn btn-small" data-act="new-entry">+ Registrar entrada</button>
+          <h2>Entradas</h2>
+          <button type="button" class="btn btn-small" data-act="new-entry">+ Entrada</button>
         </div>
-        ${entries.length === 0 ? html`<p class="empty">Nenhuma entrada registrada neste mês.</p>` : entryTypes.map((type) => group(
+        ${entries.length === 0 ? html`<p class="empty">Nenhuma entrada neste mês.</p>` : entryTypes.map((type) => group(
           `bal-in-${type}`, type === 'Mensalidade' ? 'Mensalidades' : type === 'Recolhimento' ? 'Recolhimentos' : type,
           'good', entries.filter((e) => SAM.entryType(e) === type), inTotal, entryRow, (e) => e.cents,
         ))}

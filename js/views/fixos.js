@@ -25,15 +25,12 @@
 
     return html`
       <div class="page-head">
-        <div>
-          <h1>Gastos fixos</h1>
-          <p class="page-sub">Marque cada conta quando ela for paga no mês.</p>
-        </div>
-        <button type="button" class="btn btn-primary" data-act="new-fixed">+ Novo gasto</button>
+        <h1>Gastos fixos</h1>
+        <button type="button" class="btn btn-primary" data-act="new-fixed">+ Novo</button>
       </div>
       ${ui.monthNav()}
       ${store.state.fixed.length === 0 ? html`<section class="card empty-card">
-        <p class="empty">Cadastre as contas que se repetem todo mês. Elas voltam desmarcadas a cada mês novo, e o Início avisa perto do vencimento.</p>
+        <p class="empty">Nenhum gasto fixo cadastrado.</p>
       </section>` : html`<section class="card">
         <div class="stats">
           <div><div class="stat-label">Itens pagos</div><div class="stat-value">${done.length} de ${items.length}</div></div>

@@ -6,16 +6,15 @@
     const { ms } = SAM;
     let body;
     if (!ms.configured()) {
-      body = html`<p class="hint">Esta cópia do app ainda não tem o ID do aplicativo da Microsoft. Siga o arquivo <span class="code">COMO-PUBLICAR.md</span> para configurá-lo. Enquanto isso, você pode usar a <a href="?demo=1">demonstração</a>.</p>`;
+      body = html`<p class="hint">ID do aplicativo não configurado (ver <span class="code">COMO-PUBLICAR.md</span>). <a href="?demo=1">Ver demonstração</a></p>`;
     } else if (!ms.connected()) {
-      body = html`<p class="hint">A conexão lê os pagamentos do To Do e guarda os dados da tesouraria em uma pasta própria do app no OneDrive.</p>
-        <div class="btn-row" style="margin-top:10px"><button type="button" class="btn btn-primary" data-act="sign-in">Conectar conta Microsoft</button></div>`;
+      body = html`<div class="btn-row"><button type="button" class="btn btn-primary" data-act="sign-in">Conectar</button></div>`;
     } else {
-      body = html`<p>Conta conectada: <strong>${ms.account.username}</strong></p>
-        ${ms.needsLogin ? html`<p class="hint" style="color:var(--bad)">A sessão expirou. Reconecte para atualizar o To Do e sincronizar.</p>` : ''}
+      body = html`<p><strong>${ms.account.username}</strong></p>
+        ${ms.needsLogin ? html`<p class="hint" style="color:var(--bad)">Sessão expirada.</p>` : ''}
         <div class="btn-row" style="margin-top:10px">
           ${ms.needsLogin ? html`<button type="button" class="btn btn-primary" data-act="sign-in">Reconectar</button>` : ''}
-          <button type="button" class="btn" data-act="sign-out">Sair da conta</button>
+          <button type="button" class="btn" data-act="sign-out">Sair</button>
         </div>`;
     }
     return html`<section class="card"><h2>Conta Microsoft</h2>${body}</section>`;
@@ -27,23 +26,21 @@
       <div class="page-head"><h1>Configurações</h1></div>
       ${microsoftCard()}
       <section class="card">
-        <h2>Lista de pagamentos do To Do</h2>
-        <p>${settings.todoListName ? html`Lista usada: <strong>${settings.todoListName}</strong>` : 'Nenhuma lista escolhida.'}</p>
-        <p class="hint" style="margin-top:6px">Uma tarefa por dia (título <span class="code">09/11</span>) e cada pagamento como etapa, com o valor: <span class="code">150,00 - Gráfica</span>. Ao marcar a etapa, o saldo é descontado na data do título. Tarefas sem etapas também valem, com o valor no título. O app só lê o To Do e nunca altera as tarefas.</p>
-        ${SAM.ms.connected() ? html`<div class="btn-row" style="margin-top:10px"><button type="button" class="btn" data-act="pick-list">${settings.todoListId ? 'Trocar lista' : 'Escolher lista'}</button></div>` : ''}
+        <h2>Lista do To Do</h2>
+        <p>${settings.todoListName ? html`<strong>${settings.todoListName}</strong>` : 'Nenhuma lista escolhida'}</p>
+        <p class="hint" style="margin-top:4px">Etapas no formato <span class="code">150,00 - Gráfica</span></p>
+        ${SAM.ms.connected() ? html`<div class="btn-row" style="margin-top:10px"><button type="button" class="btn" data-act="pick-list">${settings.todoListId ? 'Trocar' : 'Escolher'}</button></div>` : ''}
       </section>
       <section class="card">
         <h2>Saldo inicial</h2>
-        <p>${settings.initialDate ? html`<strong>${brl(settings.initialCents)}</strong> em ${SAM.fmtDate(settings.initialDate)}` : 'Ainda não informado.'}</p>
-        <p class="hint" style="margin-top:6px">Valor real da conta nessa data. Pagamentos e entradas anteriores a ela não entram na conta, pois já estão incluídos nesse valor.</p>
+        <p>${settings.initialDate ? html`<strong>${brl(settings.initialCents)}</strong> em ${SAM.fmtDate(settings.initialDate)}` : 'Não informado'}</p>
         <div class="btn-row" style="margin-top:10px"><button type="button" class="btn" data-act="edit-initial">${settings.initialDate ? 'Alterar' : 'Informar'}</button></div>
       </section>
       <section class="card">
-        <h2>Backup e passagem de função</h2>
-        <p class="hint">Na troca de tesoureira, exporte o arquivo e entregue à próxima, que o importa na conta dela.</p>
+        <h2>Backup</h2>
         <div class="btn-row" style="margin-top:10px">
-          <button type="button" class="btn" data-act="export-data">Exportar dados</button>
-          <button type="button" class="btn" data-act="import-data">Importar dados</button>
+          <button type="button" class="btn" data-act="export-data">Exportar</button>
+          <button type="button" class="btn" data-act="import-data">Importar</button>
         </div>
       </section>
     `;
@@ -84,7 +81,6 @@
     const { settings } = store.state;
     const v = await ui.form({
       title: 'Lista de pagamentos',
-      intro: 'Escolha a lista do To Do em que os pagamentos da SAM são registrados.',
       fields: [{
         name: 'listId',
         label: 'Lista',
@@ -105,7 +101,7 @@
     const { settings } = store.state;
     const v = await ui.form({
       title: 'Saldo inicial',
-      intro: 'Confira o extrato e informe quanto havia na conta da SAM em uma data. A partir dela, o app acompanha o saldo sozinho.',
+      intro: 'Valor do extrato na data. O que for anterior a ela não entra no cálculo.',
       fields: [
         { name: 'initialCents', label: 'Saldo na data (R$)', type: 'money', required: true, value: settings.initialDate ? settings.initialCents : null },
         { name: 'initialDate', label: 'Data', type: 'date', required: true, value: settings.initialDate || SAM.today() },

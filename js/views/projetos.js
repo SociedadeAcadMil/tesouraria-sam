@@ -35,9 +35,9 @@
         <button type="button" class="btn btn-small" data-act="edit-project" data-id="${p.id}">Editar</button>
       </div>
       ${track('Recolhimento', t.collected, p.targetCents, ['Não iniciado', 'Em andamento', 'Concluído'])}
-      ${track('Pagamento do produto', t.paid, p.costCents, ['Não pago', 'Pago em parte', 'Quitado'])}
+      ${track('Pagamento', t.paid, p.costCents, ['Não pago', 'Pago em parte', 'Quitado'])}
       <p class="hint" style="margin-top:10px">
-        Falta recolher ${brl(remaining)} · Falta pagar ${brl(owed)} · Reservado no saldo ${brl(t.reserved)}
+        Falta recolher ${brl(remaining)} · Falta pagar ${brl(owed)} · Reservado ${brl(t.reserved)}
       </p>
       ${p.archived ? '' : html`<div class="btn-row" style="margin-top:10px">
         <button type="button" class="btn btn-small" data-act="add-receipt" data-id="${p.id}">+ Recolhimento</button>
@@ -72,13 +72,10 @@
     const archived = all.filter((p) => p.archived);
     return html`
       <div class="page-head">
-        <div>
-          <h1>Projetos</h1>
-          <p class="page-sub">Quanto já foi recolhido e quanto já foi pago em cada um.</p>
-        </div>
-        <button type="button" class="btn btn-primary" data-act="new-project">+ Novo projeto</button>
+        <h1>Projetos</h1>
+        <button type="button" class="btn btn-primary" data-act="new-project">+ Novo</button>
       </div>
-      ${active.length === 0 ? html`<section class="card empty-card"><p class="empty">Nenhum projeto pendente. Cadastre um quando começar a recolher dinheiro para uma compra, como camisetas ou um evento.</p></section>` : active.map(card)}
+      ${active.length === 0 ? html`<section class="card empty-card"><p class="empty">Nenhum projeto em andamento.</p></section>` : active.map(card)}
       ${archived.length ? html`<details data-key="archived-projects" ${ui.isOpen('archived-projects')}>
         <summary>Projetos concluídos (${archived.length})</summary>
         ${archived.map(card)}
@@ -155,7 +152,7 @@
   async function addPayment(p) {
     const v = await ui.form({
       title: `Pagamento: ${p.name}`,
-      intro: 'Isto só acompanha a fase do projeto. O saldo é descontado quando a tarefa do pagamento for concluída no To Do.',
+      intro: 'Não altera o saldo.',
       fields: [
         { name: 'cents', label: 'Valor pago (R$)', type: 'money', required: true, positive: true },
         { name: 'date', label: 'Data', type: 'date', required: true, value: SAM.today() },
