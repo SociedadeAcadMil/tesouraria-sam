@@ -12,6 +12,8 @@
     settings: { updatedAt: 0, initialCents: 0, initialDate: null, todoListId: null, todoListName: null },
     entries: [], fixed: [], projects: [], budgets: [],
     ignoredTasks: {}, deleted: {},
+    // Categoria do balancete de cada pagamento do To Do: { [id]: { cat, at } }.
+    taskCategories: {},
   });
 
   function normalize(raw) {
@@ -21,6 +23,7 @@
     COLLECTIONS.forEach((c) => { if (Array.isArray(raw[c])) base[c] = raw[c]; });
     base.ignoredTasks = raw.ignoredTasks || {};
     base.deleted = raw.deleted || {};
+    base.taskCategories = raw.taskCategories || {};
     return base;
   }
 
@@ -101,6 +104,11 @@
         out.deleted[id] = Math.max(out.deleted[id] || 0, ts);
       });
       out.ignoredTasks = { ...x.ignoredTasks, ...y.ignoredTasks };
+      out.taskCategories = { ...x.taskCategories };
+      Object.entries(y.taskCategories).forEach(([id, c]) => {
+        const cur = out.taskCategories[id];
+        if (!cur || (c.at || 0) > (cur.at || 0)) out.taskCategories[id] = c;
+      });
       out.settings = (y.settings.updatedAt || 0) > (x.settings.updatedAt || 0) ? y.settings : x.settings;
       COLLECTIONS.forEach((c) => {
         const byId = new Map();
@@ -149,6 +157,28 @@
         free: balance - reserved,
         afterPending: balance - pending,
       };
+    },
+
+    // ---------- Balancete ----------
+    categoryOf(id) {
+      const c = this.state.taskCategories[id];
+      return (c && c.cat) || null;
+    },
+    setCategory(id, cat) {
+      this.state.taskCategories[id] = { cat: cat || null, at: Date.now() };
+    },
+    // Sugestão pela descrição já classificada antes ("cookie - 2412,00" e
+    // "cookie - 1572,00" viram "cookie"); vale a classificação mais recente.
+    suggestions() {
+      const byName = new Map();
+      this.todo.tasks.forEach((t) => {
+        const c = this.state.taskCategories[t.id];
+        if (!c || !c.cat) return;
+        const key = SAM.itemKey(t.title);
+        const cur = byName.get(key);
+        if (key && (!cur || c.at > cur.at)) byName.set(key, c);
+      });
+      return byName;
     },
 
     budgetFor(month) { return this.find('budgets', `budget-${month}`); },

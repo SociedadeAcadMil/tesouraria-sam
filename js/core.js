@@ -123,6 +123,26 @@ window.SAM = window.SAM || {};
     return Math.round((toUtc(toIso) - toUtc(fromIso)) / 86400000);
   };
 
+  // ---------- Balancete ----------
+  SAM.EXPENSE_CATS = [
+    { id: 'sem-contrapartida', label: 'Gastos sem contrapartida', tone: 'bad' },
+    { id: 'sem-lucro', label: 'Gastos sem lucro', tone: 'warn' },
+    { id: 'com-lucro', label: 'Gastos com lucro', tone: 'good' },
+  ];
+  SAM.ENTRY_TYPES = ['Faturamento de vendas', 'Mensalidade', 'Recolhimento'];
+  // Entradas antigas com outras categorias continuam aparecendo, em "Outras".
+  SAM.entryType = (e) => {
+    if (e.category === 'Recolhimento de projeto') return 'Recolhimento';
+    return SAM.ENTRY_TYPES.includes(e.category) ? e.category : 'Outras';
+  };
+  // Descrição sem valores nem pontuação, para reconhecer itens repetidos.
+  SAM.itemKey = (title) => String(title || '').toLowerCase()
+    .replace(/r\$/g, ' ')
+    .replace(/[\d.,]+/g, ' ')
+    .replace(/[^a-zà-ú ]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
   SAM.uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
   SAM.pct = (part, whole) => (whole > 0 ? Math.round((part / whole) * 100) : 0);
   SAM.sum = (list, fn) => list.reduce((total, item) => total + (fn ? fn(item) : item), 0);

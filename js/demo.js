@@ -39,12 +39,12 @@
   const rec = (fields) => ({ id: SAM.uid(), updatedAt: now, ...fields });
   const camisetasId = 'demo-camisetas';
   const entry1 = rec({ desc: 'Mensalidades da turma', category: 'Mensalidade', cents: 240000, date: clampPast(1) });
-  const receiptEntry = rec({ desc: 'Camisetas da turma: 1ª parcela', category: 'Recolhimento de projeto', cents: 180000, date: clampPast(3), projectId: camisetasId, receiptId: 'r1' });
+  const receiptEntry = rec({ desc: 'Camisetas da turma: 1ª parcela', category: 'Recolhimento', cents: 180000, date: clampPast(3), projectId: camisetasId, receiptId: 'r1' });
 
   store.state = {
     version: 1,
     settings: { updatedAt: now, initialCents: 415000, initialDate: `${prev}-01`, todoListId: 'demo', todoListName: 'Pagamentos SAM' },
-    entries: [entry1, receiptEntry],
+    entries: [entry1, receiptEntry, rec({ desc: 'Vendas da cantina', category: 'Faturamento de vendas', cents: 120000, date: clampPast(4) })],
     fixed: [
       rec({ name: 'Internet da sala', cents: 9990, dueDay: 5, startMonth: prev, checks: { [month]: { paidOn: clampPast(3) } } }),
       rec({ name: 'Assinatura do Canva', cents: 3500, dueDay: 8, startMonth: prev, checks: {} }),
@@ -73,6 +73,10 @@
     }],
     ignoredTasks: {},
     deleted: {},
+    taskCategories: {
+      t1: { cat: 'sem-contrapartida', at: now },
+      t4: { cat: 'sem-lucro', at: now },
+    },
   };
   store.setTodo(rawTasks.flatMap(ms.toPayments));
 })(window.SAM);
