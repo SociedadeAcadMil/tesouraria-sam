@@ -68,7 +68,8 @@ window.SAM = window.SAM || {};
     // Aqui o traço indica que o número é o valor, mesmo sem centavos ("810 - Palha").
     const leading = text.match(/^\s*(\d[\d.,]*)\s*-\s*\S/);
     if (leading) return numberToCents(leading[1]);
-    const trailing = text.match(/(?:^|[^\d\s])\s*-\s*(\d[\d.,]*)\s*$/);
+    // Traço precedido de espaço ("fgts 3/4 - 1256,26") ou de letra ("garrafas- 1307,30").
+    const trailing = text.match(/(?:^|\s|[^\d\s])-\s*(\d[\d.,]*)\s*$/);
     if (trailing) return numberToCents(trailing[1]);
     if (strict) return null;
 
