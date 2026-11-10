@@ -163,6 +163,8 @@
       const items = t.checklistItems || [];
 
       if (!items.length) {
+        // Dia ainda sem etapas (título só com a data, como "10/11"): nada a lançar.
+        if (fromTitle && SAM.parseTitleValue(t.title) === null) return [];
         return [{
           id: t.id,
           taskId: t.id,
