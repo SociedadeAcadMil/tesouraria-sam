@@ -119,7 +119,7 @@
     tasks() {
       const { ignoredTasks, settings } = this.state;
       const start = settings.initialDate;
-      return this.todo.tasks.filter((t) => !ignoredTasks[t.id]
+      return this.todo.tasks.filter((t) => !ignoredTasks[t.id] && !(t.taskId && ignoredTasks[`task:${t.taskId}`])
         && !(t.done && start && t.completedAt && t.completedAt < start));
     },
     // Entradas anteriores à data do saldo inicial já estão embutidas nele.

@@ -10,7 +10,22 @@
     const today = SAM.today();
     const month = SAM.monthOf(today);
 
-    const unreadable = store.unreadableTasks();
+    // Tarefa com vários itens sem valor (ex.: lista de lembretes): um aviso só,
+    // com a opção de ignorar a tarefa inteira, inclusive itens futuros.
+    const byTask = new Map();
+    store.unreadableTasks().forEach((t) => {
+      const key = t.group ? t.taskId : t.id;
+      byTask.set(key, [...(byTask.get(key) || []), t]);
+    });
+    const unreadable = [];
+    byTask.forEach((items, taskId) => {
+      if (items.length < 3) { unreadable.push(...items); return; }
+      list.push({
+        tone: 'bad',
+        text: `${items.length} itens sem valor na tarefa "${items[0].group}", fora do saldo. Se ela só guarda lembretes, ignore a tarefa inteira.`,
+        action: html`<button type="button" class="btn btn-small" data-act="ignore-whole-task" data-id="${taskId}" data-name="${items[0].group}">Não são pagamentos</button>`,
+      });
+    });
     (showAllUnreadable ? unreadable : unreadable.slice(0, 5)).forEach((t) => list.push({
       tone: 'bad',
       text: `Sem valor, fora do saldo: "${t.title}"${t.group ? ` (${t.group})` : ''}. Corrija no To Do, por exemplo "150,00 - Gráfica".`,
@@ -194,6 +209,16 @@
   SAM.actions['edit-entry'] = (d) => entryForm(store.find('entries', d.id));
   SAM.actions['toggle-all'] = () => { showAll = !showAll; ui.render(); };
   SAM.actions['toggle-unreadable'] = () => { showAllUnreadable = !showAllUnreadable; ui.render(); };
+  SAM.actions['ignore-whole-task'] = async (d) => {
+    const yes = await ui.confirm({
+      title: 'Ignorar a tarefa inteira?',
+      message: `Nada da tarefa "${d.name}" entrará no saldo, nem itens adicionados depois. A tarefa no To Do não é alterada.`,
+      confirmLabel: 'Ignorar tarefa',
+    });
+    if (!yes) return;
+    store.state.ignoredTasks[`task:${d.id}`] = Date.now();
+    store.commit();
+  };
   SAM.actions['ignore-task'] = (d) => {
     store.state.ignoredTasks[d.id] = Date.now();
     store.commit();

@@ -152,6 +152,8 @@
     // é a do título da tarefa; sem data no título, a da marcação no To Do.
     // Tarefa sem etapas vale como um pagamento só, com o valor no título.
     toPayments(t) {
+      // A tarefa "pendente" guarda lembretes, não pagamentos: nunca entra no saldo.
+      if (/pendente/i.test(t.title || '')) return [];
       const taskDone = t.status === 'completed';
       const day = (v) => (v ? String(v).slice(0, 10) : null);
       const taskCompleted = day(t.completedDateTime && t.completedDateTime.dateTime)
@@ -163,6 +165,7 @@
       if (!items.length) {
         return [{
           id: t.id,
+          taskId: t.id,
           title: t.title || '(sem título)',
           group: null,
           done: taskDone,
@@ -175,12 +178,13 @@
         const done = Boolean(c.isChecked) || taskDone;
         return {
           id: `${t.id}:${c.id}`,
+          taskId: t.id,
           title: c.displayName || '(sem descrição)',
           group: t.title || null,
           done,
           completedAt: done ? (fromTitle || day(c.checkedDateTime) || taskCompleted) : null,
           dueAt,
-          cents: SAM.parseTitleValue(c.displayName),
+          cents: SAM.parseTitleValue(c.displayName, { strict: true }),
         };
       });
     },

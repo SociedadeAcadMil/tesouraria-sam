@@ -52,7 +52,9 @@ window.SAM = window.SAM || {};
   // - "Pagar gráfica 150,00"       -> 15000
   // - "Comprar 3 camisas"          -> null (número sem R$ nem centavos)
   // - "R$ 100,00 de R$ 500,00"     -> null (dois valores diferentes)
-  SAM.parseTitleValue = (title) => {
+  // strict (usado nas etapas): só aceita "R$", "VALOR - descrição" ou
+  // "descrição - VALOR", para lembretes como "sorvete (2132,50)" não virarem pagamento.
+  SAM.parseTitleValue = (title, { strict = false } = {}) => {
     const text = String(title || '');
     const unique = (list) => [...new Set(list.filter((c) => c !== null && c > 0))];
 
@@ -68,6 +70,7 @@ window.SAM = window.SAM || {};
     if (leading) return numberToCents(leading[1]);
     const trailing = text.match(/(?:^|[^\d\s])\s*-\s*(\d[\d.,]*)\s*$/);
     if (trailing) return numberToCents(trailing[1]);
+    if (strict) return null;
 
     const withCents = unique(
       [...text.matchAll(/(?<![\d.,])(\d{1,3}(?:\.\d{3})+,\d{2}|\d+,\d{2})(?![\d])/g)]
