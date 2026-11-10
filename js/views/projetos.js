@@ -139,7 +139,7 @@
     if (v.toBalance) {
       const entry = store.upsert('entries', {
         desc: `${p.name}${v.note ? `: ${v.note}` : ''}`,
-        category: 'Recolhimento de projeto',
+        category: 'Recolhimento',
         cents: v.cents,
         date: v.date,
         projectId: p.id,

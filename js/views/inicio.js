@@ -1,7 +1,7 @@
 // Tela central: saldo da SAM, pendências, contas a pagar e movimentações.
 (function (SAM) {
   const { html, brl, store, ui } = SAM;
-  const CATEGORIES = ['Mensalidade', 'Recolhimento de projeto', 'Evento', 'Doação', 'Outros'];
+  const CATEGORIES = SAM.ENTRY_TYPES;
   let showAll = false;
   let showAllUnreadable = false;
 
@@ -100,7 +100,7 @@
   function movements() {
     const projectName = (id) => { const p = store.find('projects', id); return p ? p.name : null; };
     const rows = [
-      ...store.activeEntries().map((e) => ({ kind: 'in', date: e.date, title: e.desc, sub: e.category, cents: e.cents, entry: e, project: projectName(e.projectId) })),
+      ...store.activeEntries().map((e) => ({ kind: 'in', date: e.date, title: e.desc, sub: SAM.entryType(e) === 'Outras' ? e.category : SAM.entryType(e), cents: e.cents, entry: e, project: projectName(e.projectId) })),
       ...store.paidTasks().map((t) => ({ kind: 'out', date: t.completedAt, title: t.title, sub: t.group ? `To Do · ${t.group}` : 'Pago pelo To Do', cents: t.cents })),
     ].sort((a, b) => String(b.date).localeCompare(String(a.date)));
     const visible = showAll ? rows : rows.slice(0, 10);
@@ -186,7 +186,7 @@
         { name: 'desc', label: 'Descrição', required: true, value: entry && entry.desc },
         { name: 'cents', label: 'Valor (R$)', type: 'money', required: true, positive: true, value: entry ? entry.cents : null },
         { name: 'date', label: 'Data', type: 'date', required: true, value: entry ? entry.date : SAM.today() },
-        { name: 'category', label: 'Categoria', type: 'select', value: entry ? entry.category : 'Mensalidade', options: CATEGORIES.map((c) => ({ value: c, label: c })) },
+        { name: 'category', label: 'Categoria', type: 'select', value: entry ? SAM.entryType(entry) : 'Faturamento de vendas', options: CATEGORIES.map((c) => ({ value: c, label: c })) },
       ],
       validate: (v) => (startDate && v.date < startDate
         ? `Essa data é anterior ao saldo inicial (${SAM.fmtDate(startDate)}), que já inclui esse valor.`
