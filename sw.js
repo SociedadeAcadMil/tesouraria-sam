@@ -1,10 +1,10 @@
 // Deixa o app abrir sem internet. Só guarda os arquivos do próprio app: login,
 // To Do e OneDrive nunca passam por este cache.
-const CACHE = 'sam-tesouraria-v1';
+const CACHE = 'sam-tesouraria-v2';
 const FILES = [
   './', 'index.html', 'manifest.webmanifest', 'css/styles.css',
   'js/config.js', 'js/core.js', 'js/store.js', 'js/microsoft.js', 'js/sync.js', 'js/demo.js', 'js/ui.js', 'js/app.js',
-  'js/views/inicio.js', 'js/views/fixos.js', 'js/views/projetos.js', 'js/views/orcamento.js', 'js/views/config.js',
+  'js/views/inicio.js', 'js/views/fixos.js', 'js/views/projetos.js', 'js/views/orcamento.js', 'js/views/balancete.js', 'js/views/config.js',
   'icons/icon-192.png', 'icons/icon-512.png',
 ];
 
