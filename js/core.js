@@ -125,9 +125,9 @@ window.SAM = window.SAM || {};
 
   // ---------- Balancete ----------
   SAM.EXPENSE_CATS = [
-    { id: 'sem-contrapartida', label: 'Gastos sem contrapartida', tone: 'bad' },
-    { id: 'sem-lucro', label: 'Gastos sem lucro', tone: 'warn' },
-    { id: 'com-lucro', label: 'Gastos com lucro', tone: 'good' },
+    { id: 'sem-contrapartida', label: 'Sem contrapartida', tone: 'bad' },
+    { id: 'sem-lucro', label: 'Sem lucro', tone: 'warn' },
+    { id: 'com-lucro', label: 'Com lucro', tone: 'good' },
   ];
   SAM.ENTRY_TYPES = ['Faturamento de vendas', 'Mensalidade', 'Recolhimento'];
   // Entradas antigas com outras categorias continuam aparecendo, em "Outras".
