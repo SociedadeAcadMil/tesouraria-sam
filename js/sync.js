@@ -67,9 +67,24 @@
     },
 
     async refreshTodo() {
-      const { todoListId } = store.state.settings;
+      const { todoListId, todoListName } = store.state.settings;
       if (!todoListId) return;
-      store.setTodo(await ms().tasks(todoListId));
+      try {
+        store.setTodo(await ms().tasks(todoListId));
+      } catch (e) {
+        if (e.status !== 404) throw e;
+        // Uma lista compartilhada tem um ID diferente em cada conta (ex.: depois de
+        // importar o backup de outra tesoureira). Procura a lista pelo nome nesta conta.
+        const lists = await ms().lists();
+        const match = lists.find((l) => l.displayName === todoListName);
+        if (!match) {
+          const err = new Error(`Lista "${todoListName}" não encontrada nesta conta. Escolha a lista em Configurações.`);
+          throw err;
+        }
+        store.updateSettings({ todoListId: match.id });
+        store.commit();
+        store.setTodo(await ms().tasks(match.id));
+      }
     },
 
     async work() {

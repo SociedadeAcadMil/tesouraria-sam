@@ -102,7 +102,11 @@
 
     async json(pathOrUrl) {
       const res = await this.request(pathOrUrl);
-      if (!res.ok) throw new Error(`Microsoft respondeu com erro ${res.status}.`);
+      if (!res.ok) {
+        const err = new Error(`Microsoft respondeu com erro ${res.status}.`);
+        err.status = res.status;
+        throw err;
+      }
       return res.json();
     },
 
