@@ -74,6 +74,15 @@
       await app.logoutRedirect({ account: this.account, postLogoutRedirectUri: APP_URL });
     },
 
+    // Falhas na renovação silenciosa que só se resolvem entrando de novo. No celular
+    // (sobretudo iPhone) a renovação em segundo plano costuma ser bloqueada e termina
+    // em "monitor_window_timeout" depois de ~24 h do último login.
+    needsInteraction(e) {
+      const code = String((e && (e.errorCode || e.message)) || '');
+      return (window.msal && e instanceof window.msal.InteractionRequiredAuthError)
+        || /interaction_required|login_required|consent_required|interaction|monitor_window_timeout|timed_out|token_renewal_error|no_tokens_found|refresh_token_expired|invalid_grant/i.test(code);
+    },
+
     async token() {
       if (!this.account) throw new Error('Conta Microsoft não conectada.');
       const app = await getClient();
@@ -83,7 +92,7 @@
         return r.accessToken;
       } catch (e) {
         // Não redireciona sozinho: os dados continuam visíveis e a tela pede para reconectar.
-        if (e instanceof window.msal.InteractionRequiredAuthError || /interaction|login_required/i.test(e.errorCode || '')) {
+        if (ms.needsInteraction(e)) {
           this.needsLogin = true;
           const err = new Error('Sessão Microsoft expirada.');
           err.needsLogin = true;
