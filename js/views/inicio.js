@@ -23,13 +23,13 @@
       list.push({
         tone: 'bad',
         text: `${items.length} itens sem valor em "${items[0].group}"`,
-        action: html`<button type="button" class="btn btn-small" data-act="ignore-whole-task" data-id="${taskId}" data-name="${items[0].group}">Não são pagamentos</button>`,
+        action: html`<button type="button" class="btn btn-small" data-act="ignore-whole-task" data-id="${taskId}" data-name="${items[0].group}">Ignorar tarefa</button>`,
       });
     });
     (showAllUnreadable ? unreadable : unreadable.slice(0, 5)).forEach((t) => list.push({
       tone: 'bad',
       text: `Sem valor: "${t.title}"${t.group ? ` (${t.group})` : ''}`,
-      action: html`<button type="button" class="btn btn-small" data-act="ignore-task" data-id="${t.id}">Não é pagamento</button>`,
+      action: html`<button type="button" class="btn btn-small" data-act="ignore-task" data-id="${t.id}">Ignorar</button>`,
     }));
     if (unreadable.length > 5) {
       list.push({
@@ -101,6 +101,7 @@
     const projectName = (id) => { const p = store.find('projects', id); return p ? p.name : null; };
     const rows = [
       ...store.activeEntries().map((e) => ({ kind: 'in', date: e.date, title: e.desc, sub: SAM.entryType(e) === 'Outras' ? e.category : SAM.entryType(e), cents: e.cents, entry: e, project: projectName(e.projectId) })),
+      ...store.receivedIncomes().map((t) => ({ kind: 'in', date: t.completedAt, title: t.title, sub: `To Do · ${t.group || t.list}`, cents: t.cents })),
       ...store.paidTasks().map((t) => ({ kind: 'out', date: t.completedAt, title: t.title, sub: t.group ? `To Do · ${t.group}` : 'Pago pelo To Do', cents: t.cents })),
     ].sort((a, b) => String(b.date).localeCompare(String(a.date)));
     const visible = showAll ? rows : rows.slice(0, 10);
@@ -126,7 +127,20 @@
   SAM.views.inicio = () => {
     const s = store.summary();
     const open = store.openTasks();
+    const toReceive = store.pendingIncomes();
     const items = alerts();
+    const pendingList = (title, list) => html`<section class="card">
+      <h2>${title}</h2>
+      <ul class="rows">
+        ${list.map((t) => html`<li>
+          <div class="row-main">
+            <div>${t.title}</div>
+            ${t.dueAt ? html`<div class="row-sub">${SAM.fmtDate(t.dueAt)}</div>` : ''}
+          </div>
+          <span class="amount">${brl(t.cents)}</span>
+        </li>`)}
+      </ul>
+    </section>`;
 
     return html`
       <section class="hero" aria-label="Saldo">
@@ -136,7 +150,7 @@
           <div><dt>Livre</dt><dd>${brl(s.free)}</dd></div>
           <div><dt>Projetos</dt><dd>${brl(s.reserved)}</dd></div>
           <div><dt>A pagar</dt><dd>${brl(s.pending)}</dd></div>
-          <div><dt>Após pagar</dt><dd>${brl(s.afterPending)}</dd></div>
+          <div><dt>A receber</dt><dd>${brl(s.receivable)}</dd></div>
         </dl>
         <div class="hero-actions">
           <button type="button" class="btn btn-primary" data-act="new-entry">+ Entrada</button>
@@ -156,18 +170,8 @@
         </ul>
       </section>` : ''}
 
-      ${open.length ? html`<section class="card">
-        <h2>A pagar</h2>
-        <ul class="rows">
-          ${open.map((t) => html`<li>
-            <div class="row-main">
-              <div>${t.title}</div>
-              ${t.dueAt ? html`<div class="row-sub">Vence em ${SAM.fmtDate(t.dueAt)}</div>` : ''}
-            </div>
-            <span class="amount">${brl(t.cents)}</span>
-          </li>`)}
-        </ul>
-      </section>` : ''}
+      ${open.length ? pendingList('A pagar', open) : ''}
+      ${toReceive.length ? pendingList('A receber', toReceive) : ''}
 
       ${movements()}
     `;
