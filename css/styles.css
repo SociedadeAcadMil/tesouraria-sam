@@ -220,7 +220,12 @@ main {
   padding-top: 14px;
   border-top: 1px solid var(--hero-line);
 }
-@media (min-width: 620px) { .hero-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+/* No celular (2 colunas), o último valor ímpar ocupa a linha inteira. */
+.hero-metrics > div:last-child:nth-child(odd) { grid-column: 1 / -1; }
+@media (min-width: 620px) {
+  .hero-metrics { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .hero-metrics > div:last-child:nth-child(odd) { grid-column: auto; }
+}
 .hero-metrics dt { color: var(--hero-muted); font-size: .75rem; }
 .hero-metrics dd { margin: 0; font-size: 1rem; font-weight: 650; overflow-wrap: anywhere; }
 .hero-actions { margin-top: 16px; }
