@@ -159,6 +159,7 @@
           <div><dt>Projetos</dt><dd>${brl(s.reserved)}</dd></div>
           <div><dt>A pagar</dt><dd>${brl(s.pending)}</dd></div>
           <div><dt>A receber</dt><dd>${brl(s.receivable)}</dd></div>
+          <div><dt>Após pagar</dt><dd>${brl(s.afterPending)}</dd></div>
         </dl>
         <div class="hero-actions">
           <button type="button" class="btn btn-primary" data-act="new-entry">+ Entrada</button>

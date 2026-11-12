@@ -28,7 +28,7 @@
       <section class="card">
         <h2>Listas do To Do</h2>
         <p>Pagamentos: ${settings.todoListName ? html`<strong>${settings.todoListName}</strong>` : 'nenhuma lista escolhida'}</p>
-        <p style="margin-top:4px">Entradas: ${(store.todo.incomeLists || []).length ? html`<strong>${store.todo.incomeLists.join(', ')}</strong>` : 'nenhuma lista "Entradas …" encontrada'}</p>
+        <p style="margin-top:4px">Entradas: ${(store.todo.incomeLists || []).length ? html`<strong>${store.todo.incomeLists.join(', ')}</strong>` : 'nenhuma tarefa "Entradas …" na lista'}</p>
         <p class="hint" style="margin-top:4px">Etapas no formato <span class="code">150,00 - Gráfica</span></p>
         ${SAM.ms.connected() ? html`<div class="btn-row" style="margin-top:10px"><button type="button" class="btn" data-act="pick-list">${settings.todoListId ? 'Trocar' : 'Escolher'}</button></div>` : ''}
       </section>
