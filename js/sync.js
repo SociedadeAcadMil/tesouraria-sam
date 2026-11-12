@@ -66,25 +66,33 @@
       return undefined;
     },
 
+    // Lê a lista de pagamentos e todas as listas cujo nome começa com "Entradas"
+    // (uma por mês: "Entradas NOVEMBRO", "Entradas DEZEMBRO"...).
     async refreshTodo() {
       const { todoListId, todoListName } = store.state.settings;
-      if (!todoListId) return;
-      try {
-        store.setTodo(await ms().tasks(todoListId));
-      } catch (e) {
-        if (e.status !== 404) throw e;
+      const lists = await ms().lists();
+
+      let tasks = [];
+      if (todoListId) {
+        let id = todoListId;
         // Uma lista compartilhada tem um ID diferente em cada conta (ex.: depois de
-        // importar o backup de outra tesoureira). Procura a lista pelo nome nesta conta.
-        const lists = await ms().lists();
-        const match = lists.find((l) => l.displayName === todoListName);
-        if (!match) {
-          const err = new Error(`Lista "${todoListName}" não encontrada nesta conta. Escolha a lista em Configurações.`);
-          throw err;
+        // importar o backup de outra tesoureira): procura pelo nome nesta conta.
+        if (!lists.some((l) => l.id === id)) {
+          const match = lists.find((l) => l.displayName === todoListName);
+          if (!match) throw new Error(`Lista "${todoListName}" não encontrada nesta conta. Escolha a lista em Configurações.`);
+          store.updateSettings({ todoListId: match.id });
+          store.commit();
+          id = match.id;
         }
-        store.updateSettings({ todoListId: match.id });
-        store.commit();
-        store.setTodo(await ms().tasks(match.id));
+        tasks = await ms().tasks(id);
       }
+
+      const incomeLists = lists.filter((l) => /^\s*entradas\b/i.test(l.displayName) && l.id !== todoListId);
+      const incomes = [];
+      for (const l of incomeLists) {
+        incomes.push(...(await ms().tasks(l.id, 'in')).map((t) => ({ ...t, list: l.displayName })));
+      }
+      store.setTodo(tasks, incomes, incomeLists.map((l) => l.displayName));
     },
 
     async work() {

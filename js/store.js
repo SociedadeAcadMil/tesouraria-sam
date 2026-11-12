@@ -40,7 +40,7 @@
     isDemo,
     KEY,
     state: normalize(read(KEY, null)),
-    todo: read(`${KEY}:todo`, { tasks: [], fetchedAt: null }),
+    todo: { tasks: [], incomes: [], incomeLists: [], fetchedAt: null, ...read(`${KEY}:todo`, {}) },
     listeners: [],
     revision: 0,
 
@@ -50,7 +50,7 @@
     // Apaga os dados deste aparelho (usado ao sair da conta; o OneDrive não é alterado).
     clearLocal() {
       this.state = empty();
-      this.todo = { tasks: [], fetchedAt: null };
+      this.todo = { tasks: [], incomes: [], incomeLists: [], fetchedAt: null };
       write(KEY, this.state);
       write(`${KEY}:todo`, this.todo);
     },
@@ -85,8 +85,9 @@
       write(KEY, this.state);
       this.notify();
     },
-    setTodo(tasks) {
-      this.todo = { tasks, fetchedAt: Date.now() };
+    // Pagamentos (tasks) e entradas (incomes) lidos do To Do.
+    setTodo(tasks, incomes = this.todo.incomes, incomeLists = this.todo.incomeLists) {
+      this.todo = { tasks, incomes, incomeLists, fetchedAt: Date.now() };
       write(`${KEY}:todo`, this.todo);
       this.notify();
     },
@@ -124,12 +125,17 @@
     // ---------- Cálculos ----------
     // Tarefa do To Do transformada em pagamento, respeitando a data do saldo
     // inicial: o que foi concluído antes dela já está embutido no saldo inicial.
-    tasks() {
+    visible(list) {
       const { ignoredTasks, settings } = this.state;
       const start = settings.initialDate;
-      return this.todo.tasks.filter((t) => !ignoredTasks[t.id] && !(t.taskId && ignoredTasks[`task:${t.taskId}`])
+      return (list || []).filter((t) => !ignoredTasks[t.id] && !(t.taskId && ignoredTasks[`task:${t.taskId}`])
         && !(t.done && start && t.completedAt && t.completedAt < start));
     },
+    tasks() { return this.visible(this.todo.tasks); },
+    // Entradas das listas "Entradas ..." do To Do: valem quando a etapa é marcada.
+    incomes() { return this.visible(this.todo.incomes); },
+    receivedIncomes() { return this.incomes().filter((t) => t.done && t.cents !== null); },
+    pendingIncomes() { return this.incomes().filter((t) => !t.done && t.cents !== null); },
     // Entradas anteriores à data do saldo inicial já estão embutidas nele.
     activeEntries() {
       const start = this.state.settings.initialDate;
@@ -137,7 +143,7 @@
     },
     paidTasks() { return this.tasks().filter((t) => t.done && t.cents !== null); },
     openTasks() { return this.tasks().filter((t) => !t.done && t.cents !== null); },
-    unreadableTasks() { return this.tasks().filter((t) => t.cents === null); },
+    unreadableTasks() { return [...this.tasks(), ...this.incomes()].filter((t) => t.cents === null); },
 
     projectTotals(p) {
       const collected = SAM.sum(p.receipts || [], (r) => r.cents);
@@ -147,13 +153,15 @@
 
     summary() {
       const { settings, projects } = this.state;
-      const incoming = SAM.sum(this.activeEntries(), (e) => e.cents);
+      const incoming = SAM.sum(this.activeEntries(), (e) => e.cents)
+        + SAM.sum(this.receivedIncomes(), (t) => t.cents);
       const outgoing = SAM.sum(this.paidTasks(), (t) => t.cents);
       const pending = SAM.sum(this.openTasks(), (t) => t.cents);
+      const receivable = SAM.sum(this.pendingIncomes(), (t) => t.cents);
       const balance = (settings.initialCents || 0) + incoming - outgoing;
       const reserved = SAM.sum(projects.filter((p) => !p.archived), (p) => this.projectTotals(p).reserved);
       return {
-        balance, incoming, outgoing, pending, reserved,
+        balance, incoming, outgoing, pending, receivable, reserved,
         free: balance - reserved,
         afterPending: balance - pending,
       };
@@ -169,9 +177,9 @@
     },
     // Sugestão pela descrição já classificada antes ("cookie - 2412,00" e
     // "cookie - 1572,00" viram "cookie"); vale a classificação mais recente.
-    suggestions() {
+    suggestions(kind = 'out') {
       const byName = new Map();
-      this.todo.tasks.forEach((t) => {
+      (kind === 'in' ? this.todo.incomes : this.todo.tasks).forEach((t) => {
         const c = this.state.taskCategories[t.id];
         if (!c || !c.cat) return;
         const key = SAM.itemKey(t.title);

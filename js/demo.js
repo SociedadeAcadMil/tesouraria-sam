@@ -32,8 +32,23 @@
   ms.init = async () => {};
   ms.signIn = async () => SAM.ui.toast('Na demonstração não há login.');
   ms.signOut = async () => SAM.ui.toast('Na demonstração não há login.');
-  ms.lists = async () => [{ id: 'demo', displayName: 'Pagamentos SAM' }, { id: 'outra', displayName: 'Tarefas' }];
-  ms.tasks = async () => rawTasks.flatMap(ms.toPayments);
+  // Lista de entradas no formato real: uma tarefa por dia, cada entrada como etapa.
+  const incomeName = `Entradas ${SAM.monthLabel(month).split(' ')[0].toUpperCase()}`;
+  const rawIncomes = [{
+    id: 'in1',
+    title: SAM.fmtDay(clampPast(3)),
+    status: 'notStarted',
+    createdDateTime: `${clampPast(3)}T12:00:00Z`,
+    checklistItems: [
+      { id: 'a', displayName: '1.350,00 - Vendas da cantina', isChecked: true },
+      { id: 'b', displayName: '600,00 - Mensalidades atrasadas', isChecked: true },
+      { id: 'c', displayName: '420,00 - Pix das camisetas', isChecked: false },
+    ],
+  }];
+
+  ms.lists = async () => [{ id: 'demo', displayName: 'Pagamentos SAM' }, { id: 'entradas', displayName: incomeName }, { id: 'outra', displayName: 'Tarefas' }];
+  ms.tasks = async (id, kind = 'out') => (id === 'entradas' ? rawIncomes : rawTasks)
+    .flatMap(ms.toPayments).map((p) => ({ ...p, kind }));
 
   const now = Date.now();
   const rec = (fields) => ({ id: SAM.uid(), updatedAt: now, ...fields });
@@ -78,5 +93,9 @@
       t4: { cat: 'sem-lucro', at: now },
     },
   };
-  store.setTodo(rawTasks.flatMap(ms.toPayments));
+  store.setTodo(
+    rawTasks.flatMap(ms.toPayments).map((p) => ({ ...p, kind: 'out' })),
+    rawIncomes.flatMap(ms.toPayments).map((p) => ({ ...p, kind: 'in', list: incomeName })),
+    [incomeName],
+  );
 })(window.SAM);

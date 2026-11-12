@@ -123,9 +123,10 @@
 
     lists() { return this.allPages('/me/todo/lists'); },
 
-    async tasks(listId) {
+    // kind: 'out' para pagamentos, 'in' para entradas.
+    async tasks(listId, kind = 'out') {
       const raw = await this.allPages(`/me/todo/lists/${encodeURIComponent(listId)}/tasks?$top=100&$expand=checklistItems`);
-      return raw.flatMap(ms.toPayments);
+      return raw.flatMap(ms.toPayments).map((p) => ({ ...p, kind }));
     },
 
     // Data no título da tarefa ("08/11", "DIA 24/06", "29/06 (STONE)", "08/11/2026").
