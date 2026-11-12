@@ -66,13 +66,12 @@
       return undefined;
     },
 
-    // Lê a lista de pagamentos e todas as listas cujo nome começa com "Entradas"
-    // (uma por mês: "Entradas NOVEMBRO", "Entradas DEZEMBRO"...).
+    // Lê a lista da SAM: pagamentos e, nas tarefas "Entradas ..." da mesma lista, as entradas.
     async refreshTodo() {
       const { todoListId, todoListName } = store.state.settings;
       const lists = await ms().lists();
 
-      let tasks = [];
+      let items = [];
       if (todoListId) {
         let id = todoListId;
         // Uma lista compartilhada tem um ID diferente em cada conta (ex.: depois de
@@ -84,15 +83,14 @@
           store.commit();
           id = match.id;
         }
-        tasks = await ms().tasks(id);
+        items = await ms().tasks(id);
       }
-
-      const incomeLists = lists.filter((l) => /^\s*entradas\b/i.test(l.displayName) && l.id !== todoListId);
-      const incomes = [];
-      for (const l of incomeLists) {
-        incomes.push(...(await ms().tasks(l.id, 'in')).map((t) => ({ ...t, list: l.displayName })));
-      }
-      store.setTodo(tasks, incomes, incomeLists.map((l) => l.displayName));
+      const incomes = items.filter((t) => t.kind === 'in');
+      store.setTodo(
+        items.filter((t) => t.kind !== 'in'),
+        incomes,
+        [...new Set(incomes.map((t) => t.group))],
+      );
     },
 
     async work() {

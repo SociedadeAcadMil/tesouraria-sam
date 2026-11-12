@@ -132,10 +132,21 @@
 
     lists() { return this.allPages('/me/todo/lists'); },
 
-    // kind: 'out' para pagamentos, 'in' para entradas.
-    async tasks(listId, kind = 'out') {
+    // Itens da lista: kind 'out' (pagamento) ou 'in' (etapas das tarefas "Entradas ...").
+    async tasks(listId) {
       const raw = await this.allPages(`/me/todo/lists/${encodeURIComponent(listId)}/tasks?$top=100&$expand=checklistItems`);
-      return raw.flatMap(ms.toPayments).map((p) => ({ ...p, kind }));
+      return raw.flatMap(ms.toPayments);
+    },
+
+    // Data local (horário do aparelho) de um instante do To Do, como "2026-11-12T23:30:00Z".
+    // Sem conversão, uma marcação feita às 22h em Brasília cairia no dia seguinte.
+    localDay(iso) {
+      if (!iso) return null;
+      const s = String(iso);
+      const d = new Date(/[zZ]|[+-]\d\d:?\d\d$/.test(s) ? s : `${s}Z`);
+      if (Number.isNaN(d.getTime())) return s.slice(0, 10);
+      const pad = (n) => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
     },
 
     // Data no título da tarefa ("08/11", "DIA 24/06", "29/06 (STONE)", "08/11/2026").
@@ -165,9 +176,12 @@
     // quando a etapa é marcada ou a tarefa inteira é concluída. A data do pagamento
     // é a do título da tarefa; sem data no título, a da marcação no To Do.
     // Tarefa sem etapas vale como um pagamento só, com o valor no título.
+    // Tarefas com título "Entradas ..." (ex.: "Entradas NOVEMBRO") guardam entradas:
+    // cada etapa marcada soma no saldo, na data em que foi marcada.
     toPayments(t) {
       // A tarefa "pendente" guarda lembretes, não pagamentos: nunca entra no saldo.
       if (/pendente/i.test(t.title || '')) return [];
+      const kind = /^\s*entradas\b/i.test(t.title || '') ? 'in' : 'out';
       const taskDone = t.status === 'completed';
       const day = (v) => (v ? String(v).slice(0, 10) : null);
       const taskCompleted = day(t.completedDateTime && t.completedDateTime.dateTime)
@@ -177,11 +191,13 @@
       const items = t.checklistItems || [];
 
       if (!items.length) {
-        // Dia ainda sem etapas (título só com a data, como "10/11"): nada a lançar.
+        // Dia ou mês de entradas ainda sem etapas ("10/11", "Entradas DEZEMBRO"): nada a lançar.
+        if (kind === 'in') return [];
         if (fromTitle && SAM.parseTitleValue(t.title) === null) return [];
         return [{
           id: t.id,
           taskId: t.id,
+          kind,
           title: t.title || '(sem título)',
           group: null,
           done: taskDone,
@@ -195,10 +211,11 @@
         return {
           id: `${t.id}:${c.id}`,
           taskId: t.id,
+          kind,
           title: c.displayName || '(sem descrição)',
           group: t.title || null,
           done,
-          completedAt: done ? (fromTitle || day(c.checkedDateTime) || taskCompleted) : null,
+          completedAt: done ? (fromTitle || ms.localDay(c.checkedDateTime) || taskCompleted) : null,
           dueAt,
           cents: SAM.parseTitleValue(c.displayName, { strict: true }),
         };

@@ -32,23 +32,22 @@
   ms.init = async () => {};
   ms.signIn = async () => SAM.ui.toast('Na demonstração não há login.');
   ms.signOut = async () => SAM.ui.toast('Na demonstração não há login.');
-  // Lista de entradas no formato real: uma tarefa por dia, cada entrada como etapa.
+  // Tarefa de entradas do mês dentro da mesma lista: cada entrada é uma etapa.
   const incomeName = `Entradas ${SAM.monthLabel(month).split(' ')[0].toUpperCase()}`;
-  const rawIncomes = [{
+  rawTasks.push({
     id: 'in1',
-    title: SAM.fmtDay(clampPast(3)),
+    title: incomeName,
     status: 'notStarted',
-    createdDateTime: `${clampPast(3)}T12:00:00Z`,
+    createdDateTime: `${month}-01T12:00:00Z`,
     checklistItems: [
-      { id: 'a', displayName: '1.350,00 - Vendas da cantina', isChecked: true },
-      { id: 'b', displayName: '600,00 - Mensalidades atrasadas', isChecked: true },
+      { id: 'a', displayName: '1.350,00 - Vendas da cantina', isChecked: true, checkedDateTime: `${clampPast(3)}T15:00:00Z` },
+      { id: 'b', displayName: '600,00 - Mensalidades atrasadas', isChecked: true, checkedDateTime: `${clampPast(4)}T15:00:00Z` },
       { id: 'c', displayName: '420,00 - Pix das camisetas', isChecked: false },
     ],
-  }];
+  });
 
-  ms.lists = async () => [{ id: 'demo', displayName: 'Pagamentos SAM' }, { id: 'entradas', displayName: incomeName }, { id: 'outra', displayName: 'Tarefas' }];
-  ms.tasks = async (id, kind = 'out') => (id === 'entradas' ? rawIncomes : rawTasks)
-    .flatMap(ms.toPayments).map((p) => ({ ...p, kind }));
+  ms.lists = async () => [{ id: 'demo', displayName: 'Pagamentos SAM' }, { id: 'outra', displayName: 'Tarefas' }];
+  ms.tasks = async () => rawTasks.flatMap(ms.toPayments);
 
   const now = Date.now();
   const rec = (fields) => ({ id: SAM.uid(), updatedAt: now, ...fields });
@@ -93,9 +92,6 @@
       t4: { cat: 'sem-lucro', at: now },
     },
   };
-  store.setTodo(
-    rawTasks.flatMap(ms.toPayments).map((p) => ({ ...p, kind: 'out' })),
-    rawIncomes.flatMap(ms.toPayments).map((p) => ({ ...p, kind: 'in', list: incomeName })),
-    [incomeName],
-  );
+  const demoItems = rawTasks.flatMap(ms.toPayments);
+  store.setTodo(demoItems.filter((p) => p.kind !== 'in'), demoItems.filter((p) => p.kind === 'in'), [incomeName]);
 })(window.SAM);
