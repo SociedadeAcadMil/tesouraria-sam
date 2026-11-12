@@ -8,6 +8,14 @@
   function alerts() {
     const list = [];
     const today = SAM.today();
+
+    if (SAM.ms.needsLogin) {
+      list.push({
+        tone: 'bad',
+        text: 'Sessão Microsoft expirada',
+        action: html`<button type="button" class="btn btn-small btn-primary" data-act="sign-in">Reconectar</button>`,
+      });
+    }
     const month = SAM.monthOf(today);
 
     // Tarefa com vários itens sem valor (ex.: lista de lembretes): um aviso só,
