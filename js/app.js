@@ -14,7 +14,13 @@
     try {
       await ms.init();
     } catch (e) {
-      sync.setStatus({ error: navigator.onLine ? 'Falha no login da Microsoft.' : 'Sem internet: mostrando os últimos dados salvos.' });
+      // Tira o código de login da barra de endereço: ele só vale uma vez.
+      if (/[#&](code|error)=/.test(location.hash)) history.replaceState(history.state, '', location.pathname + location.search);
+      const throttled = /40012|too many requests/i.test(String(e && (e.errorCode || e.message)));
+      let error = 'Falha no login da Microsoft. Tente conectar de novo.';
+      if (!navigator.onLine) error = 'Sem internet: mostrando os últimos dados salvos.';
+      else if (throttled) error = 'Microsoft limitou as tentativas. Conecte de novo em alguns minutos.';
+      sync.setStatus({ error });
     }
     ui.render();
     sync.run();
